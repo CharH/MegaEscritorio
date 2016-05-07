@@ -10,7 +10,7 @@ namespace MegaEscritorio
     class Program
     {
         static void Main(string[] args)
-        {
+        {   //set up do...while loop to allow users to restart the process
             string endOrder = null;
             do
             {
