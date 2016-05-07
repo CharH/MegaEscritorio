@@ -1,0 +1,7 @@
+Desk Order for: Dogbreath
+width: 25
+length: 52
+surface material: PINE
+number of drawers: 1
+rush order timing: 0 day production time
+total cost: 1800

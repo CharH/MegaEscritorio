@@ -1,0 +1,5 @@
+width: 77
+length: 33
+surface material: LAMINATE
+number of drawers: 6
+rush order timing: 5
