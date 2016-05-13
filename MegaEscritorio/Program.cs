@@ -28,15 +28,15 @@ namespace MegaEscritorio
                 string material;
 
                 //get user input
-                width = GetInput("Please enter your desired desk width in inches:", 1, 500);
-                length = GetInput("Please enter your desired desk length in inches:", 1, 500);
-                drawers = GetInput("Please enter your desired number of drawers (max 7):", 0, 7);
-                material = GetInput("Please select a surface material. Options available are: Oak, Laminate, and Pine.", "OAK", "LAMINATE", "PINE");
-                rushOrder = GetInput("Normal production time is 14 days."
+                width = GetIntegerInRange("Please enter your desired desk width in inches:", 1, 500);
+                length = GetIntegerInRange("Please enter your desired desk length in inches:", 1, 500);
+                drawers = GetIntegerInRange("Please enter your desired number of drawers (max 7):", 0, 7);
+                material = GetStringOption("Please select a surface material. Options available are: Oak, Laminate, and Pine.", "OAK", "LAMINATE", "PINE");
+                rushOrder = GetIntegerOption("Normal production time is 14 days."
                     + " If you would like to rush your order, "
                     + "please enter 3, 5, or 7 to speed up production time for an extra fee."
                     + " Otherwise, enter 0 if you do not wish to rush this order.", 3, 5, 7, 0);
-               
+                
                 //calculate surface area of desk
                 int deskArea = width * length;
                 int areaPrice = CalcAreaPrice(deskArea);
@@ -61,12 +61,12 @@ namespace MegaEscritorio
                     length + " " + material + " desk with " + drawers + " drawers and a " + rushOrder + " day production time is $"
                     + totalDeskCost);
                 //ask user if they would like to save file
-                string saveOrder = GetInput("Would you like to save this order? Y/N?", "Y", "N");
+                string saveOrder = GetStringOption("Would you like to save this order? Y/N?", "Y", "N");
                 if (saveOrder == "Y")
                 {
                     saveOrderInfo(width, length, drawers, material, rushOrder, totalDeskCost);
                 }
-                endOrder = GetInput("Thank you for using our application. Please select 'E' to exit, or 'N' to start over.", "E", "N");
+                endOrder = GetStringOption("Thank you for using our application. Please select 'E' to exit, or 'N' to start over.", "E", "N");
             } while (endOrder == "N");
             
         }
@@ -183,8 +183,6 @@ namespace MegaEscritorio
                 {
                     for (int j = 0; j < array.GetLength(1); j++)
                     {
-                        if (count == lines.Length)
-                            break;
                         array[i, j] = int.Parse(lines[count]);
                         count++;
                     }
@@ -198,53 +196,37 @@ namespace MegaEscritorio
             }
         } 
 
-        //Get user input and return a value
-        private static int GetInput(string prompt, int opt1, int opt2, int opt3, int opt4)
+        //Get an int from the user that matches a given option
+        private static int GetIntegerOption(string prompt, int opt1, int opt2, int opt3, int opt4)
         {
-            int finalValue = 2;
+            int chosenNumber;
             do
             {
-                try
-                {
-                    Console.WriteLine(prompt);
-                    string userInput = Console.ReadLine();
-                    finalValue = int.Parse(userInput);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.Message);
-                }
+                    chosenNumber = int.Parse(GetInput(prompt));
                 
-                if ((finalValue != opt1) && (finalValue != opt2) && (finalValue != opt3) && (finalValue != opt4))
+                if ((chosenNumber != opt1) && (chosenNumber != opt2) && (chosenNumber != opt3) && (chosenNumber != opt4))
                 {
                     Console.WriteLine("Sorry, that isn't an option at this time. "
-                        + "Please select " + opt1 + " or " + opt2 + " or " + opt3 + " or " + 0 + ".");
+                        + "Please select " + opt1 + " or " + opt2 + " or " + opt3 + " or " + opt4 + ".");
                 }
-            } while ((finalValue != opt1) && (finalValue != opt2) && (finalValue != opt3) && (finalValue != opt4));
-            return finalValue;
+            } while ((chosenNumber != opt1) && (chosenNumber != opt2) && (chosenNumber != opt3) && (chosenNumber != opt4));
+            return chosenNumber;
         }
 
-        private static string GetInput(string prompt, string opt1, string opt2, string opt3)
+        //Get a string from the user that matches a given option
+        private static string GetStringOption(string prompt, string opt1, string opt2, string opt3)
         {
             string finalValue = null;
-            string userInput = null;
+            string chosenString = null;
             do
             {
-                try
-                {
-                    Console.WriteLine(prompt);
-                    userInput = Console.ReadLine();
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.Message);
-                }
+                chosenString = GetInput(prompt);
                 
-                if (userInput.Equals(opt1, StringComparison.OrdinalIgnoreCase))
+                if (chosenString.Equals(opt1, StringComparison.OrdinalIgnoreCase))
                     finalValue = opt1;
-                else if (userInput.Equals(opt2, StringComparison.OrdinalIgnoreCase))
+                else if (chosenString.Equals(opt2, StringComparison.OrdinalIgnoreCase))
                     finalValue = opt2;
-                else if (userInput.Equals(opt3, StringComparison.OrdinalIgnoreCase))
+                else if (chosenString.Equals(opt3, StringComparison.OrdinalIgnoreCase))
                     finalValue = opt3;
                 else
                 {
@@ -254,58 +236,44 @@ namespace MegaEscritorio
             } while (finalValue==null);
             return finalValue;
         }
-
-        private static int GetInput(string prompt, int minValue, int maxValue)
-        { int finalValue = 0;
-            do
-            {
-                try
-                {
-                    Console.WriteLine(prompt);
-                    string userInput = Console.ReadLine();
-                    finalValue = int.Parse(userInput);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.Message);
-                }
-                if ((finalValue < minValue) || (finalValue > maxValue))
-                {
-                    Console.WriteLine("Sorry, we don't make desks to those dimensions. "
-                        + "Please enter a number between " + minValue + " and " + maxValue + ".");
-                }
-            } while ((finalValue < minValue) || (finalValue > maxValue));
-            return finalValue;
-            
-        }
-
-        private static string GetInput(string prompt, string opt1, string opt2)
+        private static string GetStringOption(string prompt, string opt1, string opt2)
         {
             string finalValue = null;
-            string userInput = null;
+            string stringInput = null;
             do
             {
-                try
-                {
-                    Console.WriteLine(prompt);
-                    userInput = Console.ReadLine();
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.Message);
-                }
+                stringInput = GetInput(prompt);
 
-                if (userInput.Equals(opt1, StringComparison.OrdinalIgnoreCase))
+                if (stringInput.Equals(opt1, StringComparison.OrdinalIgnoreCase))
                     finalValue = opt1;
-                else if (userInput.Equals(opt2, StringComparison.OrdinalIgnoreCase))
+                else if (stringInput.Equals(opt2, StringComparison.OrdinalIgnoreCase))
                     finalValue = opt2;
                 else
                 {
-                    Console.WriteLine("Please select either 'Y' for Yes, or 'N' for No.");
+                    Console.WriteLine("Please select either " + opt1 + " or " + opt2 + ".");
                 }
             } while (finalValue == null);
             return finalValue;
         }
+
+        //Get an int from the user between the min and max
+        private static int GetIntegerInRange(string prompt, int minValue, int maxValue)
+        { int number = 0;
+            do
+            {
+                number = int.Parse(GetInput(prompt));
+
+                if ((number < minValue) || (number > maxValue))
+                {
+                    Console.WriteLine("Sorry, we don't make desks to those dimensions. "
+                        + "Please enter a number between " + minValue + " and " + maxValue + ".");
+                }
+            } while ((number < minValue) || (number > maxValue));
+            return number;
+            
+        }
+
+        //Get user input using prompt, trim any spaces and return a value.
         private static string GetInput(string prompt)
         {
             string finalValue = null;
@@ -315,13 +283,14 @@ namespace MegaEscritorio
                 {
                     Console.WriteLine(prompt);
                     finalValue = Console.ReadLine();
+                    finalValue = finalValue.Trim();
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e.Message);
                 }
-                
-            } while ((finalValue==null));
+
+            } while ((finalValue == null));
             return finalValue;
         }
     }
