@@ -7,7 +7,16 @@ using System.IO;
 
 namespace MegaEscritorio
 {
-    class Program
+    enum SurfaceMaterial
+    {
+        Oak,
+        Laminate,
+        Pine,
+        Marble,
+        Walnut,
+        Metal
+    };
+    class CustomDeskEstimate
     {
         static void Main(string[] args)
         {   //set up do...while loop to allow users to restart the process
@@ -24,8 +33,12 @@ namespace MegaEscritorio
                 order to recieve your personalized price quote.
                 ************************************************");
                 //variables to be used
-                int width, length, drawers, rushOrder;
+                Desk deskOrder = new Desk();
+                int width, drawers, length, rushOrder;
                 string material;
+
+                SurfaceMaterial deskTop;
+                deskTop = SurfaceMaterial.Oak;
 
                 //get user input
                 width = GetIntegerInRange("Please enter your desired desk width in inches:", 1, 500);
@@ -293,5 +306,15 @@ namespace MegaEscritorio
             } while ((finalValue == null));
             return finalValue;
         }
+    }
+    class Desk
+    {
+        public int deskWidth { get; set; }
+        public int deskLength { get; set; }
+        public int noOfDrawers { get; set; }
+        public int rushOrder { get; set; }
+        public SurfaceMaterial deskTopType { get; set; }
+        public int priceEstimate { get; set; }
+
     }
 }
