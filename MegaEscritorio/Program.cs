@@ -9,6 +9,7 @@ namespace MegaEscritorio
 {
     enum SurfaceMaterial
     {
+        None,
         Oak,
         Laminate,
         Pine,
@@ -16,7 +17,7 @@ namespace MegaEscritorio
         Walnut,
         Metal
     };
-    class CustomDeskEstimate
+    class Program
     {
         static void Main(string[] args)
         {   //set up do...while loop to allow users to restart the process
@@ -34,57 +35,57 @@ namespace MegaEscritorio
                 ************************************************");
                 //variables to be used
                 Desk deskOrder = new Desk();
-                int width, drawers, length, rushOrder;
-                string material;
-
-                SurfaceMaterial deskTop;
-                deskTop = SurfaceMaterial.Oak;
-
+                
                 //get user input
-                width = GetIntegerInRange("Please enter your desired desk width in inches:", 1, 500);
-                length = GetIntegerInRange("Please enter your desired desk length in inches:", 1, 500);
-                drawers = GetIntegerInRange("Please enter your desired number of drawers (max 7):", 0, 7);
-                material = GetStringOption("Please select a surface material. Options available are: Oak, Laminate, and Pine.", "OAK", "LAMINATE", "PINE");
-                rushOrder = GetIntegerOption("Normal production time is 14 days."
+                deskOrder.deskWidth = GetIntegerInRange("Please enter your desired desk width in inches:", 1, 500);
+                deskOrder.deskLength = GetIntegerInRange("Please enter your desired desk length in inches:", 1, 500);
+                deskOrder.noOfDrawers = GetIntegerInRange("Please enter your desired number of drawers (max 7):", 0, 7);
+                deskOrder.deskTopType = GetSurfaceType("Please select a surface material from the following: "
+                    +"Oak, Laminate, Pine, Marble, Walnut, or Metal");
+                deskOrder.rushOrder = GetIntegerOption("Normal production time is 14 days."
                     + " If you would like to rush your order, "
                     + "please enter 3, 5, or 7 to speed up production time for an extra fee."
                     + " Otherwise, enter 0 if you do not wish to rush this order.", 3, 5, 7, 0);
                 
                 //calculate surface area of desk
-                int deskArea = width * length;
+                int deskArea = deskOrder.deskWidth * deskOrder.deskLength;
                 int areaPrice = CalcAreaPrice(deskArea);
 
                 //calculate drawer pricing
-                int drawerPrice = 50 * drawers;
+                int drawerPrice = 50 * deskOrder.noOfDrawers;
 
                 //calculate material cost
-                int materialPrice = CalcMaterialPrice(material);
+                int materialPrice = CalcMaterialPrice(deskOrder.deskTopType);
 
                 //read in rush order pricing file
                 int[,] rushOrderPricing = new int[3, 3];
                 GetRushOrder(rushOrderPricing);
 
                 //calculate rush order pricing if applicable.
-                int rushOrderPrice = CalcRushOrder(rushOrderPricing, rushOrder, deskArea);
+                int rushOrderPrice = CalcRushOrder(rushOrderPricing, deskOrder.rushOrder, deskArea);
 
                 //total up the various costs and display total to user.
-                int totalDeskCost = areaPrice + drawerPrice + materialPrice + rushOrderPrice;
+                deskOrder.priceEstimate = areaPrice + drawerPrice + materialPrice + rushOrderPrice;
 
-                Console.WriteLine("The total cost of a " + width + "x" +
-                    length + " " + material + " desk with " + drawers + " drawers and a " + rushOrder + " day production time is $"
-                    + totalDeskCost);
+                Console.WriteLine("The total cost of a " + deskOrder.deskWidth + "x" +
+                    deskOrder.deskLength + " " + deskOrder.deskTopType + " desk with " + deskOrder.noOfDrawers 
+                    + " drawers and a " + deskOrder.rushOrder + " day production time is $"
+                    + deskOrder.priceEstimate);
                 //ask user if they would like to save file
                 string saveOrder = GetStringOption("Would you like to save this order? Y/N?", "Y", "N");
                 if (saveOrder == "Y")
                 {
-                    saveOrderInfo(width, length, drawers, material, rushOrder, totalDeskCost);
+                    saveOrderInfo(deskOrder.deskWidth, deskOrder.deskLength, deskOrder.noOfDrawers, deskOrder.deskTopType, deskOrder.rushOrder, deskOrder.priceEstimate);
                 }
                 endOrder = GetStringOption("Thank you for using our application. Please select 'E' to exit, or 'N' to start over.", "E", "N");
             } while (endOrder == "N");
             
         }
+
+
+
         //save users order info to external file
-        private static void saveOrderInfo(int width, int length, int drawers, string material, int rushOrder, int totalDeskCost)
+        private static void saveOrderInfo(int width, int length, int drawers, SurfaceMaterial material, int rushOrder, int totalDeskCost)
         {
             bool printCheck = true;
             string orderName = GetInput("Please enter the name you would like to save your quote under.");
@@ -152,24 +153,34 @@ namespace MegaEscritorio
         }
 
         //determine material price based on user selection and return price
-        private static int CalcMaterialPrice(string material)
+        private static int CalcMaterialPrice(SurfaceMaterial material)
         {   
             int price = 0;
             switch (material)
             {
-                case "OAK":
+                case SurfaceMaterial.Oak:
                     price = 200;
-                    return price;
-                case "LAMINATE":
+                    break;
+                case SurfaceMaterial.Laminate:
                     price = 100;
-                    return price;
-                case "PINE":
+                    break;
+                case SurfaceMaterial.Pine:
                     price = 50;
-                    return price;
+                    break;
+                case SurfaceMaterial.Marble:
+                    price = 500;
+                    break;
+                case SurfaceMaterial.Walnut:
+                    price = 250;
+                    break;
+                case SurfaceMaterial.Metal:
+                    price = 300;
+                    break;
                 default:
                     Console.WriteLine("Invalid material choice detected during calculations.");
                     return 0;
             }
+            return price;
         }
 
         //calculate a price based on desk surface area and return price
@@ -226,29 +237,46 @@ namespace MegaEscritorio
             return chosenNumber;
         }
 
-        //Get a string from the user that matches a given option
-        private static string GetStringOption(string prompt, string opt1, string opt2, string opt3)
+        //Get a string from the user and use it to set the surfaceMaterial
+        private static SurfaceMaterial GetSurfaceType(string prompt)
         {
-            string finalValue = null;
-            string chosenString = null;
+            string materialChoice;
+            SurfaceMaterial deskTop = SurfaceMaterial.None;
             do
             {
-                chosenString = GetInput(prompt);
-                
-                if (chosenString.Equals(opt1, StringComparison.OrdinalIgnoreCase))
-                    finalValue = opt1;
-                else if (chosenString.Equals(opt2, StringComparison.OrdinalIgnoreCase))
-                    finalValue = opt2;
-                else if (chosenString.Equals(opt3, StringComparison.OrdinalIgnoreCase))
-                    finalValue = opt3;
-                else
+                materialChoice = GetInput(prompt);
+                materialChoice.ToLower();
+
+                switch (materialChoice)
                 {
-                    Console.WriteLine("Sorry, that isn't an option at this time. "
-                        + "Please select from " + opt1 + " or " + opt2 + " or " + opt3 + ".");
+                    case "oak":
+                        deskTop = SurfaceMaterial.Oak;
+                        break;
+                    case "laminate":
+                        deskTop = SurfaceMaterial.Laminate;
+                        break;
+                    case "pine":
+                        deskTop = SurfaceMaterial.Pine;
+                        break;
+                    case "marble":
+                        deskTop = SurfaceMaterial.Marble;
+                        break;
+                    case "walnut":
+                        deskTop = SurfaceMaterial.Walnut;
+                        break;
+                    case "metal":
+                        deskTop = SurfaceMaterial.Metal;
+                        break;
+                    default:
+                        Console.WriteLine("Invalid selection. " + prompt);
+                        break;
                 }
-            } while (finalValue==null);
-            return finalValue;
+
+            } while (deskTop == SurfaceMaterial.None);
+            return deskTop;
         }
+
+        //Get a string from the user that matches a given option
         private static string GetStringOption(string prompt, string opt1, string opt2)
         {
             string finalValue = null;
