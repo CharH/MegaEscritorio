@@ -9,13 +9,18 @@ using Newtonsoft.Json;
 namespace MegaEscritorio
 {   public interface deskOrder
     {
-        void saveOrderInfo();
-
-
-
-
+        void saveOrderInfo(Desk desk);
+        int CalcRushOrder(int[,] rushOrderPricing, int rushOrder, int deskArea);
+        int CalcMaterialPrice(SurfaceMaterial material);
+        int CalcAreaPrice(int deskArea);
+        void GetRushOrder(int[,] array);
+        int GetIntegerOption(string prompt, int opt1, int opt2, int opt3, int opt4);
+        SurfaceMaterial GetSurfaceType(string prompt);
+        string GetStringOption(string prompt, string opt1, string opt2);
+        int GetIntegerInRange(string prompt, int minValue, int maxValue);
+        string GetInput(string prompt);
     }
-    enum SurfaceMaterial
+    public enum SurfaceMaterial
     {
         None,
         Oak,
@@ -25,7 +30,7 @@ namespace MegaEscritorio
         Walnut,
         Metal
     };
-    class Program : deskOrder
+    class Program
     {
         static void Main(string[] args)
         {   //set up do...while loop to allow users to restart the process
@@ -43,39 +48,38 @@ namespace MegaEscritorio
                 ************************************************");
                 //variables to be used
                 Desk newDeskQuote = new Desk();
+                DeskOrderMethods d = new DeskOrderMethods();
                 
                 //get user input
-                newDeskQuote.deskWidth = GetIntegerInRange("Please enter your desired desk width in inches:", 1, 500);
-                newDeskQuote.deskLength = GetIntegerInRange("Please enter your desired desk length in inches:", 1, 500);
-                newDeskQuote.noOfDrawers = GetIntegerInRange("Please enter your desired number of drawers (max 7):", 0, 7);
-                newDeskQuote.deskTopType = GetSurfaceType("Please select a surface material from the following: "
+                newDeskQuote.deskWidth = d.GetIntegerInRange("Please enter your desired desk width in inches:", 1, 500);
+                newDeskQuote.deskLength = d.GetIntegerInRange("Please enter your desired desk length in inches:", 1, 500);
+                newDeskQuote.noOfDrawers = d.GetIntegerInRange("Please enter your desired number of drawers (max 7):", 0, 7);
+                newDeskQuote.deskTopType = d.GetSurfaceType("Please select a surface material from the following: "
                     +"Oak, Laminate, Pine, Marble, Walnut, or Metal");
-                newDeskQuote.rushOrder = GetIntegerOption("Normal production time is 14 days."
+                newDeskQuote.rushOrder = d.GetIntegerOption("Normal production time is 14 days."
                     + " If you would like to rush your order, "
                     + "please enter 3, 5, or 7 to speed up production time for an extra fee."
                     + " Otherwise, enter 0 if you do not wish to rush this order.", 3, 5, 7, 0);
                 
                 //calculate surface area of desk
                 int deskArea = newDeskQuote.deskWidth * newDeskQuote.deskLength;
-                int areaPrice = CalcAreaPrice(deskArea);
+                int areaPrice = d.CalcAreaPrice(deskArea);
 
                 //calculate drawer pricing
                 int drawerPrice = 50 * newDeskQuote.noOfDrawers;
 
                 //calculate material cost
-                int materialPrice = CalcMaterialPrice(newDeskQuote.deskTopType);
+                int materialPrice = d.CalcMaterialPrice(newDeskQuote.deskTopType);
 
                 //read in rush order pricing file
                 int[,] rushOrderPricing = new int[3, 3];
-                GetRushOrder(rushOrderPricing);
+                d.GetRushOrder(rushOrderPricing);
 
                 //calculate rush order pricing if applicable.
-                int rushOrderPrice = CalcRushOrder(rushOrderPricing, newDeskQuote.rushOrder, deskArea);
+                int rushOrderPrice = d.CalcRushOrder(rushOrderPricing, newDeskQuote.rushOrder, deskArea);
 
                 //total up the various costs and display total to user.
                 newDeskQuote.priceEstimate = areaPrice + drawerPrice + materialPrice + rushOrderPrice;
-
-                
 
                 Console.WriteLine("The total cost of a " + newDeskQuote.deskWidth + "x" +
                     newDeskQuote.deskLength + " " + newDeskQuote.deskTopType + " desk with " + newDeskQuote.noOfDrawers 
@@ -83,31 +87,47 @@ namespace MegaEscritorio
                     + newDeskQuote.priceEstimate);
                 
                 //ask user if they would like to save file
-                string saveOrder = GetStringOption("Would you like to save this order? Y/N?", "Y", "N");
+                string saveOrder = d.GetStringOption("Would you like to save this order? Y/N?", "Y", "N");
                 if (saveOrder == "Y")
                 {
-                    SaveOrderInfo(newDeskQuote);
+                    d.saveOrderInfo(newDeskQuote);
                 }
-                endOrder = GetStringOption("Thank you for using our application. Please select 'E' to exit, or 'N' to start over.", "E", "N");
+                endOrder = d.GetStringOption("Thank you for using our application. Please select 'E' to exit, or 'N' to start over.", "E", "N");
             } while (endOrder == "N");
             
         }
 
 
 
+        
+    }
+    public class Desk
+    {
+        public int deskWidth { get; set; }
+        public int deskLength { get; set; }
+        public int noOfDrawers { get; set; }
+        public int rushOrder { get; set; }
+        public SurfaceMaterial deskTopType { get; set; }
+        public int priceEstimate { get; set; }
+
+        
+    }
+    public class DeskOrderMethods : deskOrder
+    {
         //save users order info to external file
-        public void saveOrderInfo(object orderInfo)
+        public void saveOrderInfo(Desk orderInfo)
         {
             bool printCheck = true;
             string orderName = GetInput("Please enter the name you would like to save your quote under.");
             try
             {
                 //organize order info into JSON format
-                //string[] deskOrderInfo = new string[0];
+                
                 string deskOrderInfo = JsonConvert.SerializeObject(orderInfo, Formatting.Indented);
-
+                string[] stringArray = new string[1] { deskOrderInfo };
+                
                 //write order info to external file
-                File.WriteAllLines("DeskQuote_"+orderName+".txt", deskOrderInfo);
+                File.WriteAllLines("DeskQuote_" + orderName + ".txt", stringArray);
             }
             catch (Exception e)
             {
@@ -118,10 +138,10 @@ namespace MegaEscritorio
             if (printCheck != false)
                 Console.WriteLine("Your order has been saved.");
         }
-        
+
         //determine rush order pricing using size of desk and rush order timing.
-        public static int CalcRushOrder(int[,] rushOrderPricing, int rushOrder, int deskArea)
-        {   
+        public int CalcRushOrder(int[,] rushOrderPricing, int rushOrder, int deskArea)
+        {
 
             int rushCost = 0;
             int i = 0, j = 0;
@@ -155,12 +175,12 @@ namespace MegaEscritorio
 
                 return rushCost;
             }
-            
+
         }
 
         //determine material price based on user selection and return price
-        public static int CalcMaterialPrice(SurfaceMaterial material)
-        {   
+        public int CalcMaterialPrice(SurfaceMaterial material)
+        {
             int price = 0;
             switch (material)
             {
@@ -190,8 +210,8 @@ namespace MegaEscritorio
         }
 
         //calculate a price based on desk surface area and return price
-        public static int CalcAreaPrice(int deskArea)
-        {   
+        public int CalcAreaPrice(int deskArea)
+        {
             int price = 0;
             if (deskArea > 1000)
             {
@@ -203,8 +223,8 @@ namespace MegaEscritorio
         }
 
         //read in pricing info file and place it into a 2D array
-        public static void GetRushOrder(int[,] array)
-        {           
+        public void GetRushOrder(int[,] array)
+        {
             try
             {
                 string[] lines = File.ReadAllLines("rushOrderPrices.txt");
@@ -224,16 +244,16 @@ namespace MegaEscritorio
             {
                 Console.WriteLine(e.Message);
             }
-        } 
+        }
 
         //Get an int from the user that matches a given option
-        public static int GetIntegerOption(string prompt, int opt1, int opt2, int opt3, int opt4)
+        public int GetIntegerOption(string prompt, int opt1, int opt2, int opt3, int opt4)
         {
             int chosenNumber;
             do
             {
-                    chosenNumber = int.Parse(GetInput(prompt));
-                
+                chosenNumber = int.Parse(GetInput(prompt));
+
                 if ((chosenNumber != opt1) && (chosenNumber != opt2) && (chosenNumber != opt3) && (chosenNumber != opt4))
                 {
                     Console.WriteLine("Sorry, that isn't an option at this time. "
@@ -244,7 +264,7 @@ namespace MegaEscritorio
         }
 
         //Get a string from the user and use it to set the surfaceMaterial
-        public static SurfaceMaterial GetSurfaceType(string prompt)
+        public SurfaceMaterial GetSurfaceType(string prompt)
         {
             string materialChoice;
             SurfaceMaterial deskTop = SurfaceMaterial.None;
@@ -283,7 +303,7 @@ namespace MegaEscritorio
         }
 
         //Get a string from the user that matches a given option
-        public static string GetStringOption(string prompt, string opt1, string opt2)
+        public string GetStringOption(string prompt, string opt1, string opt2)
         {
             string finalValue = null;
             string stringInput = null;
@@ -304,8 +324,9 @@ namespace MegaEscritorio
         }
 
         //Get an int from the user between the min and max
-        public static int GetIntegerInRange(string prompt, int minValue, int maxValue)
-        { int number = 0;
+        public int GetIntegerInRange(string prompt, int minValue, int maxValue)
+        {
+            int number = 0;
             do
             {
                 number = int.Parse(GetInput(prompt));
@@ -317,11 +338,11 @@ namespace MegaEscritorio
                 }
             } while ((number < minValue) || (number > maxValue));
             return number;
-            
+
         }
 
         //Get user input using prompt, trim any spaces and return a value.
-        public static string GetInput(string prompt)
+        public string GetInput(string prompt)
         {
             string finalValue = null;
             do
@@ -340,15 +361,5 @@ namespace MegaEscritorio
             } while ((finalValue == null));
             return finalValue;
         }
-    }
-    class Desk
-    {
-        public int deskWidth { get; set; }
-        public int deskLength { get; set; }
-        public int noOfDrawers { get; set; }
-        public int rushOrder { get; set; }
-        public SurfaceMaterial deskTopType { get; set; }
-        public int priceEstimate { get; set; }
-
     }
 }
